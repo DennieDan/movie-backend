@@ -29,5 +29,6 @@ func Connect() {
 	// Auto chuyen sang SQL code
 	database.AutoMigrate(
 		&models.User{},
+		&models.Post{},
 	)
 }
