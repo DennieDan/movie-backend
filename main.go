@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/DennieDan/movie-backend/database"
+	"github.com/DennieDan/movie-backend/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
@@ -21,6 +22,11 @@ func main() {
 	port := os.Getenv("PORT")
 
 	app := fiber.New()
-	// routes.Setup(app)
-	app.Listen(":" + port)
+
+	app.Get("/posts", func(c *fiber.Ctx) error {
+		return c.SendString("OK")
+	})
+
+	routes.Setup(app)
+	log.Fatal(app.Listen(":" + port))
 }
