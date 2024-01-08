@@ -7,6 +7,7 @@ import (
 	"github.com/DennieDan/movie-backend/database"
 	"github.com/DennieDan/movie-backend/routes"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -22,6 +23,13 @@ func main() {
 	port := os.Getenv("PORT")
 
 	app := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:5173",
+		AllowHeaders: "Origin, Content-Type, Accept",
+		// AllowOrigins: []string{"http://localhost:4000"},
+		// AllowHeaders: []string{"Origin, Content-Type, Accept"},
+	}))
 
 	app.Get("/posts", func(c *fiber.Ctx) error {
 		return c.SendString("OK")

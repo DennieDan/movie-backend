@@ -40,3 +40,27 @@ func CreatePost(c *fiber.Ctx) error {
 	})
 
 }
+
+func GetPosts(c *fiber.Ctx) error {
+	posts := []models.Post{}
+	if err := database.DB.Find(&posts); err != nil {
+		log.Println(err)
+
+	}
+	c.Status(200)
+	return c.JSON(posts)
+}
+
+func GetPostById(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	log.Println(id)
+
+	if err != nil {
+		return c.Status(401).SendString("Invalid id")
+	}
+
+	post := &models.Post{}
+
+	database.DB.First(&post, id)
+	return c.JSON(post)
+}

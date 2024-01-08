@@ -28,6 +28,8 @@ func Connect() {
 
 	// Auto chuyen sang SQL code
 	database.AutoMigrate(
+		&models.Movie{},
+		&models.Topic{},
 		&models.User{},
 		&models.Post{},
 	)
