@@ -9,7 +9,7 @@ import (
 func Setup(app *fiber.App) {
 	// app.Post("api/register", controllers.Register)
 	// app.Post("api/create_post", controllers.CreatePost)
-	// app.Get("api/posts", controllers.GetPosts)
+	app.Get("api/posts", controllers.GetPosts)
 	// app.Get("api/posts/:id", controllers.GetPostById)
 	app.Get("api/movies", controllers.GetMovies)
 	app.Get("api/topics", controllers.GetTopics)

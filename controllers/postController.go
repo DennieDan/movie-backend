@@ -1,13 +1,12 @@
 package controllers
 
-// import (
-// 	"fmt"
-// 	"log"
+import (
+	"log"
 
-// 	"github.com/DennieDan/movie-backend/database"
-// 	"github.com/DennieDan/movie-backend/models"
-// 	"github.com/gofiber/fiber/v2"
-// )
+	"github.com/DennieDan/movie-backend/database"
+	"github.com/DennieDan/movie-backend/models"
+	"github.com/gofiber/fiber/v2"
+)
 
 // func CreatePost(c *fiber.Ctx) error {
 // 	var data map[string]interface{}
@@ -41,15 +40,17 @@ package controllers
 
 // }
 
-// func GetPosts(c *fiber.Ctx) error {
-// 	posts := []models.Post{}
-// 	if err := database.DB.Find(&posts); err != nil {
-// 		log.Println(err)
+func GetPosts(c *fiber.Ctx) error {
+	posts := []models.Post{}
+	err := database.DB.Joins("Movie").Joins("Topic").Joins("Author").Preload("Comments").Preload("Voters").Preload("Savers").Find(&posts)
 
-// 	}
-// 	c.Status(200)
-// 	return c.JSON(posts)
-// }
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.Status(200)
+	return c.JSON(posts)
+}
 
 // func GetPostById(c *fiber.Ctx) error {
 // 	id, err := c.ParamsInt("id")
