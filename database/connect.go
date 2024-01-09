@@ -32,5 +32,8 @@ func Connect() {
 		&models.Topic{},
 		&models.User{},
 		&models.Post{},
+		&models.Comment{},
+		&models.CommentVotes{},
+		&models.PostVotes{},
 	)
 }

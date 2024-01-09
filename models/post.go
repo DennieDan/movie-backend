@@ -10,10 +10,13 @@ type Post struct {
 	Id        uint64         `gorm:"primary_key;auto_increment" json:"id"`
 	Title     string         `gorm:"size:255;not null;unique" json:"title"`
 	Content   string         `gorm:"text;not null;" json:"content"`
-	MovieID   uint32         `gorm:"" json:"movie_id"`
-	TopicID   uint32         `gorm:"" json:"topic_id"`
-	AuthorID  uint32         `gorm:"not null;" json:"author_id"`
+	MovieID   uint64         `json:"movie_id"`
+	TopicID   uint64         `json:"topic_id"`
+	AuthorID  uint64         `gorm:"not null;" json:"author_id"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Comments  []Comment      `gorm:"foreignKey:PostID;" json:"comments"`
+	Voters    []*User        `gorm:"many2many:post_votes;" json:"voters"`
+	Savers    []*User        `gorm:"many2many:save_posts;" json:"savers"`
 }

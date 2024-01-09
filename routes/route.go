@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/DennieDan/movie-backend/controllers"
+	// "github.com/DennieDan/movie-backend/controllers"
 	"github.com/gofiber/fiber/v2"
 )
 
 func Setup(app *fiber.App) {
-	app.Post("api/register", controllers.Register)
-	app.Post("api/create_post", controllers.CreatePost)
-	app.Get("api/posts", controllers.GetPosts)
-	app.Get("api/posts/:id", controllers.GetPostById)
+	// app.Post("api/register", controllers.Register)
+	// app.Post("api/create_post", controllers.CreatePost)
+	// app.Get("api/posts", controllers.GetPosts)
+	// app.Get("api/posts/:id", controllers.GetPostById)
 }
