@@ -11,6 +11,17 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func GetUsers(c *fiber.Ctx) error {
+	users := []models.User{}
+	err := database.DB.Preload("Posts").Preload("Comments").Preload("VoteComments").Preload("VotePosts").Preload("SavedPosts").Find(&users)
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.Status(200)
+	return c.JSON(users)
+}
+
 func validateEmail(email string) bool {
 	Re := regexp.MustCompile(`[a-z0-9._%+\-]+@[a-z0-9._%+\-]+\.[a-z0-9._%+\-]+`)
 	return Re.MatchString(email)
