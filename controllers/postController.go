@@ -33,7 +33,7 @@ func CreatePost(c *fiber.Ctx) error {
 		log.Println(err)
 	}
 
-	c.Status(200)
+	c.Status(201) // created
 	return c.JSON(fiber.Map{
 		"post":    post,
 		"message": "Post created successfully",
@@ -74,3 +74,38 @@ func GetPosts(c *fiber.Ctx) error {
 // 	database.DB.First(&post, id)
 // 	return c.JSON(post)
 // }
+
+func EditPost(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(401).SendString("Invalid id")
+	}
+
+	var data map[string]interface{}
+	if err := c.BodyParser(&data); err != nil {
+		fmt.Println("Unable to parse body")
+	}
+
+	var post models.Post
+	if err := database.DB.First(&post, uint64(id)).Error; err != nil {
+		log.Println(err)
+		return c.Status(401).SendString(err.Error())
+	}
+	post.Title = data["title"].(string)
+	post.Content = data["content"].(string)
+	post.MovieID = uint64(data["movie_id"].(float64))
+	post.TopicID = uint64(data["topic_id"].(float64))
+
+	err = database.DB.Save(&post).Error
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.Status(200) // OK
+	return c.JSON(fiber.Map{
+		"post":    post,
+		"message": "Post edited successfully",
+	})
+
+}
