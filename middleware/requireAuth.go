@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -24,17 +23,19 @@ func RequireAuth(c *fiber.Ctx) error {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return []byte(os.Getenv("SECRET")), nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		c.Status(401) // fiber.StatusUnauthorized
+		return c.JSON(fiber.Map{
+			"message": "unauthenticated",
+		})
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		// Check exp
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
-			c.Status(fiber.StatusUnauthorized)
+			c.Status(401)
 			return c.JSON(fiber.Map{
 				"message": "unauthenticated",
 			})
@@ -45,7 +46,7 @@ func RequireAuth(c *fiber.Ctx) error {
 		database.DB.First(&user, claims["sub"])
 
 		if user.Id == 0 {
-			c.Status(fiber.StatusUnauthorized)
+			c.Status(401)
 			return c.JSON(fiber.Map{
 				"message": "unauthenticated",
 			})
@@ -57,7 +58,7 @@ func RequireAuth(c *fiber.Ctx) error {
 		// Continue
 		return c.Next()
 	} else {
-		c.Status(fiber.StatusUnauthorized)
+		c.Status(401)
 		return c.JSON(fiber.Map{
 			"message": "unauthenticated",
 		})

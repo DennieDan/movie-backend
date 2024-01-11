@@ -150,3 +150,21 @@ func Validate(c *fiber.Ctx) error {
 		"message": user,
 	})
 }
+
+func Logout(c *fiber.Ctx) error {
+	cookie := fiber.Cookie{
+		Name:     "Authorization",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour), // Set the expiry time an hour ago
+		Secure:   false,
+		HTTPOnly: true,
+		SameSite: "lax",
+	}
+
+	c.Cookie(&cookie)
+
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message": "success",
+	})
+}
