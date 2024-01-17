@@ -26,6 +26,8 @@ func Connect() {
 	}
 	DB = database
 
+	_ = DB.SetupJoinTable(&models.Post{}, "Voters", &models.PostVotes{})
+
 	// Auto chuyen sang SQL code
 	database.AutoMigrate(
 		&models.Movie{},

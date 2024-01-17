@@ -165,3 +165,84 @@ func SavePost(c *fiber.Ctx) error {
 		"message": "Post saved successfully",
 	})
 }
+
+func AddVoter(user_id int, post_id int) error {
+	var user models.User
+	if err := database.DB.First(&user, uint64(user_id)).Error; err != nil {
+		return err
+	}
+
+	var post models.Post
+	if err := database.DB.First(&post, uint64(post_id)).Error; err != nil {
+		return err
+	}
+
+	post.Voters = append(post.Voters, &user)
+	if err := database.DB.Save(&post).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// Don't use post without created_at and updated_at
+func UpvotePost(c *fiber.Ctx) error {
+	user_id, err := c.ParamsInt("user")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	post_id, err := c.ParamsInt("post")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	var post_vote models.PostVotes
+	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
+	if post_vote.UserID == 0 {
+		err := AddVoter(user_id, post_id)
+		if err != nil {
+			log.Println(err)
+			c.Status(400)
+			return c.JSON("Hi")
+		}
+	}
+
+	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
+	post_vote.Score = 1
+	if err := database.DB.Save(&post_vote).Error; err != nil {
+		log.Println(err)
+		c.Status(400)
+		return c.JSON("Ba")
+	}
+
+	// if post_vote.PostID != 0 {
+	// 	post_vote.Score = 1
+	// 	if err := database.DB.Save(&post_vote).Error; err != nil {
+	// 		log.Println(err)
+	// 	}
+	// } else {
+	// 	var user models.User
+	// 	if err := database.DB.First(&user, uint64(user_id)).Error; err != nil {
+	// 		log.Println(err)
+	// 		return c.Status(401).SendString(err.Error())
+	// 	}
+	// 	post.Voters = append(post.Voters, &user)
+	// 	if err := database.DB.Save(&post).Error; err != nil {
+	// 		log.Println(err)
+	// 	}
+
+	// 	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
+	// 	if post_vote.PostID != 0 {
+	// 		post_vote.Score = 1
+	// 		if err := database.DB.Save(&post_vote).Error; err != nil {
+	// 			log.Println(err)
+	// 		}
+	// 	}
+	// }
+
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message": "Upvoted successfully",
+	})
+
+}

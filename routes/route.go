@@ -30,4 +30,5 @@ func Setup(app *fiber.App) {
 	app.Delete("api/delete_comment/:id", controllers.DeleteComment)
 
 	app.Put("api/save_post/:user/:post", controllers.SavePost)
+	app.Post("api/upvote_post/:user/:post", controllers.UpvotePost)
 }
