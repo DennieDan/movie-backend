@@ -12,6 +12,9 @@ func Setup(app *fiber.App) {
 	app.Post("api/login", controllers.Login)
 	app.Get("api/validate", middleware.RequireAuth, controllers.Validate)
 	app.Post("api/logout", controllers.Logout)
+	app.Put("api/update_account/:id", controllers.UpdateAccount)
+	app.Put("api/change_password/:id", controllers.ChangePassword)
+
 	app.Post("api/create_post", controllers.CreatePost)
 	app.Get("api/posts", controllers.GetPosts)
 	app.Put("api/edit_post/:id", controllers.EditPost)
@@ -22,6 +25,9 @@ func Setup(app *fiber.App) {
 	app.Get("api/users", controllers.GetUsers)
 	app.Post("api/create_comment", controllers.CreateComment)
 	app.Get("api/comments/:id", controllers.GetCommentsByPostId)
+	app.Get("api/total_comments/:id", controllers.GetTotalCommentsByPostId)
 	app.Put("api/edit_comment/:id", controllers.EditComment)
 	app.Delete("api/delete_comment/:id", controllers.DeleteComment)
+
+	app.Put("api/save_post/:user/:post", controllers.SavePost)
 }

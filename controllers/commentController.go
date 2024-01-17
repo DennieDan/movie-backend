@@ -15,17 +15,26 @@ import (
 
 // }
 
-// func GetCommentsByPostId(c *fiber.Ctx) error { viet lai getPosts ben postController
-// 	postId, err := c.ParamsInt("id")
-// 	if err != nil {
-// 		return c.Status(401).SendString("Invalid id")
-// 	}
+func GetTotalCommentsByPostId(c *fiber.Ctx) error {
+	postID, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(401).SendString("Invalid id")
+	}
+	var comments []models.Comment
 
-// 	var comments []models.Comment
+	err = database.DB.Where("post_id = ?", postID).Find(&comments).Error
+	if err != nil {
+		log.Println(err)
+	}
 
-// 	if err := database.DB.
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message":        "Get total comments successfully",
+		"total_comments": len(comments),
+	})
 
-// }
+}
+
 func preload(d *gorm.DB) *gorm.DB {
 	return d.Preload("Responses", preload)
 }
@@ -38,8 +47,6 @@ func GetCommentsByPostId(c *fiber.Ctx) error {
 	var comments []models.Comment
 
 	err = database.DB.Where("post_id = ? AND response_id IS NULL", postID).Preload(clause.Associations, preload).Find(&comments).Error
-	// err = database.DB.Where("post_id = ?", postID).Preload("Responses").Find(&comments).Error
-
 	if err != nil {
 		log.Println(err)
 	}

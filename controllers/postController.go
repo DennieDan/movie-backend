@@ -109,6 +109,7 @@ func EditPost(c *fiber.Ctx) error {
 	})
 
 }
+
 func DeletePost(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -122,5 +123,45 @@ func DeletePost(c *fiber.Ctx) error {
 	c.Status(204) // No Content
 	return c.JSON(fiber.Map{
 		"message": "Post deleted successfully",
+	})
+}
+
+func SavePost(c *fiber.Ctx) error {
+	user_id, err := c.ParamsInt("user")
+	if err != nil {
+		return c.Status(404).SendString("No user found")
+	}
+
+	post_id, err := c.ParamsInt("post")
+	if err != nil {
+		return c.Status(404).SendString("No post found")
+	}
+
+	var user models.User
+	var post models.Post
+	if err := database.DB.First(&user, uint64(user_id)).Error; err != nil {
+		log.Println(err)
+		return c.Status(401).SendString(err.Error())
+	}
+	if err := database.DB.First(&post, uint64(post_id)).Error; err != nil {
+		log.Println(err)
+		return c.Status(401).SendString(err.Error())
+	}
+
+	user.SavedPosts = append(user.SavedPosts, &post)
+	post.Savers = append(post.Savers, &user)
+
+	err = database.DB.Save(&user).Error
+	if err != nil {
+		log.Println(err)
+	}
+	err = database.DB.Save(&post).Error
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message": "Post saved successfully",
 	})
 }

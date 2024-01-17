@@ -43,7 +43,7 @@ func RequireAuth(c *fiber.Ctx) error {
 
 		// Find the user with the token sub (subject)
 		var user models.User
-		database.DB.First(&user, claims["sub"])
+		database.DB.Preload("SavedPosts").First(&user, claims["sub"])
 
 		if user.Id == 0 {
 			c.Status(401)

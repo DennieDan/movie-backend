@@ -46,11 +46,20 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	// Check if email already exist in database
-	database.DB.Where("email=?", strings.TrimSpace(data["email"].(string))).First(&userData)
+	database.DB.Where("email = ?", strings.TrimSpace(data["email"].(string))).First(&userData)
 	if userData.Id != 0 {
 		c.Status(400)
 		return c.JSON(fiber.Map{
 			"message": "Email already exists",
+		})
+	}
+
+	// Check if username already exist in database
+	database.DB.Where("username = ?", strings.TrimSpace(data["username"].(string))).First(&userData)
+	if userData.Id != 0 {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": "Username already exists",
 		})
 	}
 
@@ -63,7 +72,7 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	user := models.User{
-		Username:   data["username"].(string),
+		Username:   strings.TrimSpace(data["username"].(string)),
 		Email:      strings.TrimSpace(data["email"].(string)),
 		AvatarPath: "",
 	}
@@ -145,6 +154,7 @@ func Login(c *fiber.Ctx) error {
 
 func Validate(c *fiber.Ctx) error {
 	user := c.Locals("user") // get user from context which is assigned in requireAuth
+
 	c.Status(200)
 	return c.JSON(fiber.Map{
 		"message": user,
@@ -165,6 +175,107 @@ func Logout(c *fiber.Ctx) error {
 
 	c.Status(200)
 	return c.JSON(fiber.Map{
-		"message": "success",
+		"message": "You are successfully logged out",
 	})
+}
+
+func UpdateAccount(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(401).SendString("Invalid id")
+	}
+
+	var data map[string]interface{}
+	if err := c.BodyParser(&data); err != nil {
+		fmt.Println("Unable to parse body")
+	}
+
+	var user models.User
+	var userData models.User
+	if err := database.DB.First(&user, uint64(id)).Error; err != nil {
+		log.Println(err)
+		return c.Status(401).SendString(err.Error())
+	}
+	// username, email
+	// Check if email already exist in database
+	database.DB.Where("email = ? AND id <> ?", strings.TrimSpace(data["email"].(string)), id).First(&userData)
+	if userData.Id != 0 {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": "Email already exists",
+		})
+	}
+	user.Email = strings.TrimSpace(data["email"].(string))
+
+	// Check if username already exist in database
+	database.DB.Where("username = ? AND id <> ?", strings.TrimSpace(data["username"].(string)), id).First(&userData)
+	if userData.Id != 0 {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": "Username already exists",
+		})
+	}
+	user.Username = strings.TrimSpace(data["username"].(string))
+
+	// Update Account
+	err = database.DB.Save(&user).Error
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.Status(200) // OK
+	return c.JSON(fiber.Map{
+		"user":    user,
+		"message": "Account edited successfully",
+	})
+
+}
+
+func ChangePassword(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(401).SendString("Invalid id")
+	}
+
+	var data map[string]interface{}
+	if err := c.BodyParser(&data); err != nil {
+		fmt.Println("Unable to parse body")
+	}
+
+	// Look up the requested user via username
+	var user models.User
+	if err := database.DB.First(&user, uint64(id)).Error; err != nil {
+		log.Println(err)
+		return c.Status(401).SendString("Invalid Id")
+	}
+
+	// Compare old password
+	if err := user.ComparePassword(data["old_password"].(string)); err != nil {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": "Incorrect Old Password",
+		})
+	}
+
+	// Compare new password with retype new password
+	if data["new_password"].(string) != data["retype_password"].(string) {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": "Password Confirmation doesn't match",
+		})
+	}
+
+	user.SetPassword(data["new_password"].(string))
+	err = database.DB.Save(&user).Error
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.Status(200) // OK
+	return c.JSON(fiber.Map{
+		"message": "Password changed successfully",
+	})
+
 }
