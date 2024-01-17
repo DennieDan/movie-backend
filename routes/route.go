@@ -19,4 +19,6 @@ func Setup(app *fiber.App) {
 	app.Get("api/movies", controllers.GetMovies)
 	app.Get("api/topics", controllers.GetTopics)
 	app.Get("api/users", controllers.GetUsers)
+	app.Post("api/create_comment", controllers.CreateComment)
+	app.Get("api/comments/:id", controllers.GetCommentsByPostId)
 }
