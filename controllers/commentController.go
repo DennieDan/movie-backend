@@ -91,3 +91,50 @@ func CreateComment(c *fiber.Ctx) error {
 		"message": "Comment created successfully",
 	})
 }
+
+func EditComment(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(404).SendString("Not Found ID")
+	}
+
+	var data map[string]interface{}
+	if err := c.BodyParser(&data); err != nil {
+		fmt.Println("Unable to parse body")
+	}
+
+	var comment models.Comment
+	if err := database.DB.First(&comment, uint64(id)).Error; err != nil {
+		log.Println(err)
+		return c.Status(401).SendString(err.Error())
+	}
+
+	comment.Body = data["body"].(string)
+
+	err = database.DB.Save(&comment).Error
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.Status(200) // OK
+	return c.JSON(fiber.Map{
+		"comment": comment,
+		"message": "Comment edited successfully",
+	})
+}
+
+func DeleteComment(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(404).SendString("Not found ID")
+	}
+
+	if err := database.DB.Where("id = ?", id).Delete(&models.Comment{}).Error; err != nil {
+		log.Println(err)
+	}
+
+	c.Status(204) // No Content
+	return c.JSON(fiber.Map{
+		"message": "Comment deleted successfully",
+	})
+}

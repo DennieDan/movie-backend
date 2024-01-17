@@ -109,3 +109,18 @@ func EditPost(c *fiber.Ctx) error {
 	})
 
 }
+func DeletePost(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(404).SendString("Not found ID")
+	}
+
+	if err := database.DB.Where("id = ?", id).Delete(&models.Post{}).Error; err != nil {
+		log.Println(err)
+	}
+
+	c.Status(204) // No Content
+	return c.JSON(fiber.Map{
+		"message": "Post deleted successfully",
+	})
+}

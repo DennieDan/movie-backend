@@ -19,7 +19,7 @@ type Post struct {
 	Movie     Movie          `json:"movie"`
 	Topic     Topic          `json:"topic"`
 	Author    User           `gorm:"foreignKey:AuthorID;references:Id" json:"author"`
-	Comments  []Comment      `gorm:"foreignKey:PostID;" json:"comments"`
+	Comments  []Comment      `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;" json:"comments"`
 	Voters    []*User        `gorm:"many2many:post_votes;" json:"voters"`
 	Savers    []*User        `gorm:"many2many:save_posts;" json:"savers"`
 }
