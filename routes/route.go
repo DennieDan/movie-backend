@@ -31,4 +31,6 @@ func Setup(app *fiber.App) {
 
 	app.Put("api/save_post/:user/:post", controllers.SavePost)
 	app.Post("api/upvote_post/:user/:post", controllers.UpvotePost)
+	app.Post("api/downvote_post/:user/:post", controllers.DownvotePost)
+	app.Post("api/unvote_post/:user/:post", controllers.UnvotePost)
 }

@@ -186,6 +186,7 @@ func AddVoter(user_id int, post_id int) error {
 
 // Don't use post without created_at and updated_at
 func UpvotePost(c *fiber.Ctx) error {
+	// Get user_id and post_id from parameters
 	user_id, err := c.ParamsInt("user")
 	if err != nil {
 		return c.Status(401).SendString("Invalid ID")
@@ -196,23 +197,27 @@ func UpvotePost(c *fiber.Ctx) error {
 		return c.Status(401).SendString("Invalid ID")
 	}
 
+	// query the join table to check if the user has already voted
 	var post_vote models.PostVotes
 	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
+
+	// If the record is not found, create the reaction into the join table
 	if post_vote.UserID == 0 {
 		err := AddVoter(user_id, post_id)
 		if err != nil {
 			log.Println(err)
 			c.Status(400)
-			return c.JSON("Hi")
+			return c.JSON(err)
 		}
 	}
 
+	// Get the related record from the join table and update
 	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
 	post_vote.Score = 1
 	if err := database.DB.Save(&post_vote).Error; err != nil {
 		log.Println(err)
 		c.Status(400)
-		return c.JSON("Ba")
+		return c.JSON(err)
 	}
 
 	// if post_vote.PostID != 0 {
@@ -243,6 +248,86 @@ func UpvotePost(c *fiber.Ctx) error {
 	c.Status(200)
 	return c.JSON(fiber.Map{
 		"message": "Upvoted successfully",
+	})
+
+}
+
+func DownvotePost(c *fiber.Ctx) error {
+	// Get user_id and post_id from parameters
+	user_id, err := c.ParamsInt("user")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	post_id, err := c.ParamsInt("post")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	// query the join table to check if the user has already voted
+	var post_vote models.PostVotes
+	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
+
+	// If the record is not found, create the reaction into the join table
+	if post_vote.UserID == 0 {
+		err := AddVoter(user_id, post_id)
+		if err != nil {
+			log.Println(err)
+			c.Status(400)
+			return c.JSON(err)
+		}
+	}
+
+	// Get the related record from the join table and update
+	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
+	post_vote.Score = -1
+	if err := database.DB.Save(&post_vote).Error; err != nil {
+		log.Println(err)
+		c.Status(400)
+		return c.JSON(err)
+	}
+
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message": "Downvoted successfully",
+	})
+}
+
+func UnvotePost(c *fiber.Ctx) error {
+	// Get user_id and post_id from parameters
+	user_id, err := c.ParamsInt("user")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	post_id, err := c.ParamsInt("post")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	// query the join table to check if the user has already voted
+	var post_vote models.PostVotes
+	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
+
+	// If the record is not found, create the reaction into the join table
+	if post_vote.UserID == 0 {
+		c.Status(401)
+		return c.JSON(fiber.Map{
+			"message": "No record found",
+		})
+	}
+
+	post_vote.Score = 0
+
+	if err := database.DB.Save(&post_vote).Error; err != nil {
+		log.Println(err)
+		c.Status(400)
+		return c.JSON(err)
+	}
+
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message": "Unvoted successfully",
 	})
 
 }
