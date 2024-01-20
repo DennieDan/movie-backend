@@ -41,7 +41,7 @@ func Register(c *fiber.Ctx) error {
 	if !validateEmail(strings.TrimSpace(data["email"].(string))) {
 		c.Status(400)
 		return c.JSON(fiber.Map{
-			"message": "Invalid Email address",
+			"error": "Invalid Email address",
 		})
 	}
 
@@ -50,7 +50,7 @@ func Register(c *fiber.Ctx) error {
 	if userData.Id != 0 {
 		c.Status(400)
 		return c.JSON(fiber.Map{
-			"message": "Email already exists",
+			"error": "Email already exists",
 		})
 	}
 
@@ -60,6 +60,13 @@ func Register(c *fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(fiber.Map{
 			"error": "Username already exists",
+		})
+	}
+
+	if len(strings.TrimSpace(data["username"].(string))) < 3 {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"error": "Username must be at least 3 characters",
 		})
 	}
 

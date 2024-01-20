@@ -41,7 +41,7 @@ func RequireAuth(c *fiber.Ctx) error {
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
 			c.Status(401)
 			return c.JSON(fiber.Map{
-				"error": "unauthenticated1",
+				"error": "unauthenticated",
 			})
 		}
 
@@ -52,7 +52,7 @@ func RequireAuth(c *fiber.Ctx) error {
 		if user.Id == 0 {
 			c.Status(401)
 			return c.JSON(fiber.Map{
-				"error": "unauthenticated2",
+				"error": "unauthenticated",
 			})
 		}
 
@@ -64,7 +64,7 @@ func RequireAuth(c *fiber.Ctx) error {
 	} else {
 		c.Status(401)
 		return c.JSON(fiber.Map{
-			"error": "unauthenticated3",
+			"error": "unauthenticated",
 		})
 	}
 }
