@@ -59,7 +59,7 @@ func Register(c *fiber.Ctx) error {
 	if userData.Id != 0 {
 		c.Status(400)
 		return c.JSON(fiber.Map{
-			"message": "Username already exists",
+			"error": "Username already exists",
 		})
 	}
 
@@ -67,7 +67,7 @@ func Register(c *fiber.Ctx) error {
 	if len(data["password"].(string)) <= 6 {
 		c.Status(400)
 		return c.JSON(fiber.Map{
-			"message": "Password must be greater than 6 characters",
+			"error": "Password must be greater than 6 characters",
 		})
 	}
 
@@ -157,7 +157,8 @@ func Validate(c *fiber.Ctx) error {
 
 	c.Status(200)
 	return c.JSON(fiber.Map{
-		"message": user,
+		"message": "You are still authorized",
+		"user":    user,
 	})
 }
 

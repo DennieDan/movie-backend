@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -18,17 +17,22 @@ func RequireAuth(c *fiber.Ctx) error {
 	// Decode/validate it
 
 	// Parse takes the token string and a function for looking up the key.
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
+	// token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+	// 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+	// 	}
 
+	// 	return []byte(os.Getenv("SECRET")), nil
+	// })
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("SECRET")), nil
 	})
+
 	if err != nil {
 		c.Status(401) // fiber.StatusUnauthorized
 		return c.JSON(fiber.Map{
-			"message": "unauthenticated",
+			"error": "unauthenticated",
 		})
 	}
 
@@ -37,7 +41,7 @@ func RequireAuth(c *fiber.Ctx) error {
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
 			c.Status(401)
 			return c.JSON(fiber.Map{
-				"message": "unauthenticated",
+				"error": "unauthenticated1",
 			})
 		}
 
@@ -48,7 +52,7 @@ func RequireAuth(c *fiber.Ctx) error {
 		if user.Id == 0 {
 			c.Status(401)
 			return c.JSON(fiber.Map{
-				"message": "unauthenticated",
+				"error": "unauthenticated2",
 			})
 		}
 
@@ -60,7 +64,7 @@ func RequireAuth(c *fiber.Ctx) error {
 	} else {
 		c.Status(401)
 		return c.JSON(fiber.Map{
-			"message": "unauthenticated",
+			"error": "unauthenticated3",
 		})
 	}
 }
