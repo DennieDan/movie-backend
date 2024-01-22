@@ -3,10 +3,12 @@ package controllers
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/DennieDan/movie-backend/database"
 	"github.com/DennieDan/movie-backend/models"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func CreatePost(c *fiber.Ctx) error {
@@ -22,10 +24,14 @@ func CreatePost(c *fiber.Ctx) error {
 		// MovieID:  data["movie_id"].(float64), // lay MovieID va TopicID la do frontend
 		// TopicID:  data["topic_id"].(float64),
 		// AuthorID: data["topic_id"].(float64),
-		MovieID:  uint64(data["movie_id"].(float64)), // convert from float64 to uint32 as specified in the struct
+		// MovieID:  uint64(data["movie_id"].(float64)), // convert from float64 to uint32 as specified in the struct
 		TopicID:  uint64(data["topic_id"].(float64)),
 		AuthorID: uint64(data["author_id"].(float64)), // do authentication
 		// created_at and updated_at will be handled by mysql
+	}
+
+	if data["movie_id"] != nil {
+		post.MovieID = uint64(data["movie_id"].(float64))
 	}
 
 	err := database.DB.Create(&post)
@@ -41,17 +47,39 @@ func CreatePost(c *fiber.Ctx) error {
 
 }
 
+type PostRetrieve struct {
+	Id        uint64           `gorm:"primary_key;auto_increment" json:"id"`
+	Title     string           `gorm:"size:255;not null;unique" json:"title"`
+	Content   string           `gorm:"text;not null;" json:"content"`
+	MovieID   uint64           `gorm:"default:null" json:"movie_id"`
+	TopicID   uint64           `json:"topic_id"`
+	AuthorID  uint64           `gorm:"not null;" json:"author_id"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+	DeletedAt gorm.DeletedAt   `gorm:"index"`
+	Movie     models.Movie     `json:"movie"`
+	Topic     models.Topic     `json:"topic"`
+	Author    models.User      `gorm:"foreignKey:AuthorID;references:Id" json:"author"`
+	Comments  []models.Comment `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;" json:"comments"`
+	Votes     int              `json:"votes"`
+}
+
 func GetPosts(c *fiber.Ctx) error {
-	posts := []models.Post{}
-	err := database.DB.Joins("Movie").Joins("Topic").Joins("Author").Preload("Comments").Preload("Voters").Preload("Savers").Find(&posts).Error
+	// posts := []models.Post{}
+	posts := []PostRetrieve{}
+	// err := database.DB.Joins("Movie").Joins("Topic").Joins("Author").Preload("Comments").Preload("Voters").Preload("Savers").Find(&posts).Error
+	// err := database.DB.Joins("Movie").Joins("Topic").Joins("Author").Preload("Comments").Joins("Voters").Preload("Savers").Find(&posts).Error
 
-	// query := database.DB.Table("posts").
-	// 	Joins("INNER JOIN movies ON movies.id = posts.movie_id").
-	// 	Joins("INNER JOIN topics ON topics.id = posts.topic_id").
-	// 	Joins("INNER JOIN users ON users.id = posts.author_id").
-	// 	Select("posts.*, movies.title AS movie, topics.name AS topic, users.id AS author")
+	query := database.DB.Table("posts").
+		Joins("LEFT JOIN movies ON movies.id = posts.movie_id").
+		Joins("LEFT JOIN topics ON topics.id = posts.topic_id").
+		Joins("LEFT JOIN users ON users.id = posts.author_id").
+		Joins("LEFT JOIN post_votes ON posts.id = post_votes.post_id").
+		Joins("Movie").Joins("Topic").Joins("Author").Preload("Comments").
+		Select("posts.*, movies.title AS movie, topics.name AS topic, users.id AS author, SUM(post_votes.score) as votes").
+		Group("posts.id")
 
-	// err := query.Find(&posts)
+	err := query.Find(&posts)
 
 	if err != nil {
 		log.Println(err)
