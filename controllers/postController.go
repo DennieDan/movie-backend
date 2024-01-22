@@ -30,8 +30,17 @@ func CreatePost(c *fiber.Ctx) error {
 		// created_at and updated_at will be handled by mysql
 	}
 
+	var movie models.Movie
+	if err := database.DB.First(&movie, uint64(data["movie_id"].(float64))).Error; err != nil {
+		log.Println(err)
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
 	if data["movie_id"] != nil {
-		post.MovieID = uint64(data["movie_id"].(float64))
+		post.MovieID = &movie.Id
 	}
 
 	err := database.DB.Create(&post)
@@ -119,9 +128,17 @@ func EditPost(c *fiber.Ctx) error {
 		log.Println(err)
 		return c.Status(401).SendString(err.Error())
 	}
+	var movie models.Movie
+	if err := database.DB.First(&movie, uint64(data["movie_id"].(float64))).Error; err != nil {
+		log.Println(err)
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"error": err,
+		})
+	}
 	post.Title = data["title"].(string)
 	post.Content = data["content"].(string)
-	post.MovieID = uint64(data["movie_id"].(float64))
+	post.MovieID = &movie.Id
 	post.TopicID = uint64(data["topic_id"].(float64))
 
 	err = database.DB.Save(&post).Error
@@ -245,7 +262,9 @@ func UpvotePost(c *fiber.Ctx) error {
 	if err := database.DB.Save(&post_vote).Error; err != nil {
 		log.Println(err)
 		c.Status(400)
-		return c.JSON(err)
+		return c.JSON(fiber.Map{
+			"message": err,
+		})
 	}
 
 	// if post_vote.PostID != 0 {

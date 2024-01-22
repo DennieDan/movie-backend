@@ -10,7 +10,7 @@ type Post struct {
 	Id        uint64         `gorm:"primary_key;auto_increment" json:"id"`
 	Title     string         `gorm:"size:255;not null;unique" json:"title"`
 	Content   string         `gorm:"text;not null;" json:"content"`
-	MovieID   uint64         `gorm:"default:null" json:"movie_id"`
+	MovieID   *uint64        `gorm:"default:null" json:"movie_id"`
 	TopicID   uint64         `json:"topic_id"`
 	AuthorID  uint64         `gorm:"not null;" json:"author_id"`
 	CreatedAt time.Time      `json:"created_at"`
