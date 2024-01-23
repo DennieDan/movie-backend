@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/DennieDan/movie-backend/database"
 	"github.com/DennieDan/movie-backend/models"
@@ -35,8 +36,23 @@ func GetTotalCommentsByPostId(c *fiber.Ctx) error {
 
 }
 
+type CommentRetrieve struct {
+	Id         uint64 `gorm:"primary_key;auto_increment" json:"id"`
+	UserID     uint64 `json:"user_id"`
+	PostID     uint64 `json:"post_id"`
+	ResponseID *uint64
+	Body       string            `gorm:"text;not null;" json:"content"`
+	CreatedAt  time.Time         `json:"created_at"`
+	UpdatedAt  time.Time         `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt    `gorm:"index"`
+	Responses  []CommentRetrieve `gorm:"foreignKey:ResponseID;constraint:OnDelete:CASCADE;"`
+	User       string            `json:"user"`
+	Voters     []*models.User    `gorm:"many2many:comment_votes;" json:"voters"`
+}
+
 func preload(d *gorm.DB) *gorm.DB {
 	return d.Preload("Responses", preload)
+
 }
 
 func GetCommentsByPostId(c *fiber.Ctx) error {
@@ -44,10 +60,21 @@ func GetCommentsByPostId(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(401).SendString("Invalid id")
 	}
+	// replies := []CommentRetrieve{}
 	var comments []models.Comment
 
-	err = database.DB.Where("post_id = ? AND response_id IS NULL", postID).Preload(clause.Associations, preload).Find(&comments).Error
+	err = database.DB.Table("comments").
+		Where("comments.post_id = ? AND comments.response_id IS NULL", postID).
+		Preload(clause.Associations, preload).
+		Find(&comments).Error
+	// err = database.DB.Table("comments").
+	// 	Joins("INNER JOIN users ON users.id = comments.user_id").
+	// 	Where("post_id = ? AND response_id IS NULL", postID).
+	// 	Select("comments.*, users.username AS user").
+	// 	Preload(clause.Associations, preload).
+	// 	Find(&replies).Error
 	if err != nil {
+		c.Status(400)
 		log.Println(err)
 	}
 

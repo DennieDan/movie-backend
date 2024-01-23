@@ -18,6 +18,7 @@ func GetUsers(c *fiber.Ctx) error {
 	users := []models.User{}
 	err := database.DB.Preload("Posts").Preload("Comments").Preload("VoteComments").Preload("VotePosts").Preload("SavedPosts").Find(&users)
 	if err != nil {
+		c.Status(400)
 		log.Println(err)
 	}
 
