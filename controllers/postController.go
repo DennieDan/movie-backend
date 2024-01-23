@@ -258,7 +258,11 @@ func UpvotePost(c *fiber.Ctx) error {
 
 	// Get the related record from the join table and update
 	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
-	post_vote.Score = 1
+	if post_vote.Score != 1 {
+		post_vote.Score = 1
+	} else {
+		post_vote.Score = 0
+	}
 	if err := database.DB.Save(&post_vote).Error; err != nil {
 		log.Println(err)
 		c.Status(400)
@@ -327,7 +331,11 @@ func DownvotePost(c *fiber.Ctx) error {
 
 	// Get the related record from the join table and update
 	database.DB.Where("post_id = ? AND user_id = ?", post_id, user_id).First(&post_vote)
-	post_vote.Score = -1
+	if post_vote.Score != -1 {
+		post_vote.Score = -1
+	} else {
+		post_vote.Score = 0
+	}
 	if err := database.DB.Save(&post_vote).Error; err != nil {
 		log.Println(err)
 		c.Status(400)
