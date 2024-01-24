@@ -16,5 +16,6 @@ type Comment struct {
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
 	Responses  []Comment      `gorm:"foreignKey:ResponseID;constraint:OnDelete:CASCADE;"`
-	Voters     []*User        `gorm:"many2many:comment_votes;" json:"voters"`
+	// CommentVotes []*CommentVote `gorm:"many2many:comment_vote;foreignKey:CommentID" json:"comment_votes"`
+	CommentVotes []CommentVotes `gorm:"foreignKey:CommentID" json:"comment_votes"`
 }

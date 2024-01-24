@@ -9,6 +9,7 @@ import (
 	"github.com/DennieDan/movie-backend/models"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func CreatePost(c *fiber.Ctx) error {
@@ -84,7 +85,7 @@ func GetPosts(c *fiber.Ctx) error {
 		Joins("LEFT JOIN topics ON topics.id = posts.topic_id").
 		Joins("LEFT JOIN users ON users.id = posts.author_id").
 		Joins("LEFT JOIN post_votes ON posts.id = post_votes.post_id").
-		Joins("Movie").Joins("Topic").Joins("Author").Preload("Comments").
+		Joins("Movie").Joins("Topic").Joins("Author").Preload("Comments." + clause.Associations).
 		Select("posts.*, movies.title AS movie, topics.name AS topic, users.id AS author, SUM(post_votes.score) as votes").
 		Group("posts.id")
 
@@ -211,7 +212,7 @@ func SavePost(c *fiber.Ctx) error {
 	})
 }
 
-func AddVoter(user_id int, post_id int) error {
+func addVoter(user_id int, post_id int) error {
 	var user models.User
 	if err := database.DB.First(&user, uint64(user_id)).Error; err != nil {
 		return err
@@ -248,7 +249,7 @@ func UpvotePost(c *fiber.Ctx) error {
 
 	// If the record is not found, create the reaction into the join table
 	if post_vote.UserID == 0 {
-		err := AddVoter(user_id, post_id)
+		err := addVoter(user_id, post_id)
 		if err != nil {
 			log.Println(err)
 			c.Status(400)
@@ -321,7 +322,7 @@ func DownvotePost(c *fiber.Ctx) error {
 
 	// If the record is not found, create the reaction into the join table
 	if post_vote.UserID == 0 {
-		err := AddVoter(user_id, post_id)
+		err := addVoter(user_id, post_id)
 		if err != nil {
 			log.Println(err)
 			c.Status(400)

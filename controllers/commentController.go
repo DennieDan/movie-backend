@@ -63,9 +63,10 @@ func GetCommentsByPostId(c *fiber.Ctx) error {
 	// replies := []CommentRetrieve{}
 	var comments []models.Comment
 
-	err = database.DB.Table("comments").
-		Where("comments.post_id = ? AND comments.response_id IS NULL", postID).
-		Preload(clause.Associations, preload).
+	err = database.DB.
+		// Where("comments.post_id = ? AND comments.response_id IS NULL", postID).
+		Where("comments.post_id = ?", postID).
+		Preload(clause.Associations).
 		Find(&comments).Error
 	// err = database.DB.Table("comments").
 	// 	Joins("INNER JOIN users ON users.id = comments.user_id").
@@ -170,5 +171,129 @@ func DeleteComment(c *fiber.Ctx) error {
 	c.Status(204) // No Content
 	return c.JSON(fiber.Map{
 		"message": "Comment deleted successfully",
+	})
+}
+
+func addCommentVoter(user_id int, comment_id int) error {
+	var user models.User
+	if err := database.DB.First(&user, uint64(user_id)).Error; err != nil {
+		return err
+	}
+
+	var comment models.Comment
+	if err := database.DB.First(&comment, uint64(comment_id)).Error; err != nil {
+		return err
+	}
+
+	// comment.Voters = append(comment.Voters, &user)
+	// if err := database.DB.Save(&comment).Error; err != nil {
+	// 	return err
+	// }
+
+	comment_vote := models.CommentVotes{
+		UserID:    uint64(user_id),
+		CommentID: uint64(comment_id),
+		Score:     0,
+	}
+
+	err := database.DB.Create(&comment_vote)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return nil
+}
+
+func UpvoteComment(c *fiber.Ctx) error {
+	// Get user_id and comment_id from parameters
+	user_id, err := c.ParamsInt("user")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	comment_id, err := c.ParamsInt("comment")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	// query the join table to check if the user has already voted
+	var comment_vote models.CommentVotes
+	database.DB.Where("comment_id = ? AND user_id = ?", comment_id, user_id).First(&comment_vote)
+
+	// If the record is not found, create the reaction into the join table
+	if comment_vote.UserID == 0 {
+		err := addCommentVoter(user_id, comment_id)
+		if err != nil {
+			log.Println(err)
+			c.Status(400)
+			return c.JSON(err)
+		}
+	}
+
+	// Get the related record from the join table and update
+	database.DB.Where("comment_id = ? AND user_id = ?", comment_id, user_id).First(&comment_vote)
+	if comment_vote.Score != 1 {
+		comment_vote.Score = 1
+	} else {
+		comment_vote.Score = 0
+	}
+	if err := database.DB.Save(&comment_vote).Error; err != nil {
+		log.Println(err)
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": err,
+		})
+	}
+
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message": "Comment Upvoted successfully",
+	})
+}
+
+func DownvoteComment(c *fiber.Ctx) error {
+	// Get user_id and comment_id from parameters
+	user_id, err := c.ParamsInt("user")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	comment_id, err := c.ParamsInt("comment")
+	if err != nil {
+		return c.Status(401).SendString("Invalid ID")
+	}
+
+	// query the join table to check if the user has already voted
+	var comment_vote models.CommentVotes
+	database.DB.Where("comment_id = ? AND user_id = ?", comment_id, user_id).First(&comment_vote)
+
+	// If the record is not found, create the reaction into the join table
+	if comment_vote.UserID == 0 {
+		err := addCommentVoter(user_id, comment_id)
+		if err != nil {
+			log.Println(err)
+			c.Status(400)
+			return c.JSON(err)
+		}
+	}
+
+	// Get the related record from the join table and update
+	database.DB.Where("comment_id = ? AND user_id = ?", comment_id, user_id).First(&comment_vote)
+	if comment_vote.Score != -1 {
+		comment_vote.Score = -1
+	} else {
+		comment_vote.Score = 0
+	}
+	if err := database.DB.Save(&comment_vote).Error; err != nil {
+		log.Println(err)
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": err,
+		})
+	}
+
+	c.Status(200)
+	return c.JSON(fiber.Map{
+		"message": "Comment Downvoted successfully",
 	})
 }
